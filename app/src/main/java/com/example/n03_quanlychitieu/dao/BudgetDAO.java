@@ -27,6 +27,7 @@ public class BudgetDAO {
         values.put(DatabaseContract.Budgets.COLUMN_DESCRIPTION, budget.getDescription());
         values.put(DatabaseContract.Budgets.COLUMN_USER_ID, budget.getUser_id());
         values.put(DatabaseContract.Budgets.COLUMN_CATEGORY_ID, budget.getCategory_id());
+        values.put(DatabaseContract.Budgets.COLUMN_WARNING_THRESHOLD, budget.getWarning_threshold());
         return values;
     }
 
@@ -85,7 +86,8 @@ public class BudgetDAO {
                         cursor.getString(cursor.getColumnIndexOrThrow(DatabaseContract.Budgets.COLUMN_END_DATE)),
                         cursor.getString(cursor.getColumnIndexOrThrow(DatabaseContract.Budgets.COLUMN_DESCRIPTION)),
                         cursor.getString(cursor.getColumnIndexOrThrow(DatabaseContract.Budgets.COLUMN_USER_ID)),
-                        cursor.getString(cursor.getColumnIndexOrThrow(DatabaseContract.Budgets.COLUMN_CATEGORY_ID))
+                        cursor.getString(cursor.getColumnIndexOrThrow(DatabaseContract.Budgets.COLUMN_CATEGORY_ID)),
+                        cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseContract.Budgets.COLUMN_WARNING_THRESHOLD))
                 );
                 budgets.add(budget);
             } while (cursor.moveToNext());
@@ -118,7 +120,8 @@ public class BudgetDAO {
                     cursor.getString(cursor.getColumnIndexOrThrow(DatabaseContract.Budgets.COLUMN_END_DATE)),
                     cursor.getString(cursor.getColumnIndexOrThrow(DatabaseContract.Budgets.COLUMN_DESCRIPTION)),
                     cursor.getString(cursor.getColumnIndexOrThrow(DatabaseContract.Budgets.COLUMN_USER_ID)),
-                    cursor.getString(cursor.getColumnIndexOrThrow(DatabaseContract.Budgets.COLUMN_CATEGORY_ID))
+                    cursor.getString(cursor.getColumnIndexOrThrow(DatabaseContract.Budgets.COLUMN_CATEGORY_ID)),
+                    cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseContract.Budgets.COLUMN_WARNING_THRESHOLD))
             );
             cursor.close();
             return budget;
@@ -128,14 +131,15 @@ public class BudgetDAO {
     }
 
     // Lấy giới hạn chi tiêu theo danh mục
-    public List<Budgets> getBudgetsByCategory(String categoryId) {
+    public List<Budgets> getBudgetsByCategory(String categoryId, String userId) {
         List<Budgets> budgets = new ArrayList<>();
-        String selection = DatabaseContract.Budgets.COLUMN_CATEGORY_ID + " = ?";
-        String[] selectionArgs = {categoryId};
+        String selection = DatabaseContract.Budgets.COLUMN_CATEGORY_ID + " = ? AND " + DatabaseContract.Budgets.COLUMN_USER_ID + " = ?";
+        String[] selectionArgs = {categoryId, userId};
 
         Cursor cursor = db.query(
                 DatabaseContract.Budgets.TABLE_NAME,
                 null,
+
                 selection,
                 selectionArgs,
                 null,
@@ -152,7 +156,8 @@ public class BudgetDAO {
                         cursor.getString(cursor.getColumnIndexOrThrow(DatabaseContract.Budgets.COLUMN_END_DATE)),
                         cursor.getString(cursor.getColumnIndexOrThrow(DatabaseContract.Budgets.COLUMN_DESCRIPTION)),
                         cursor.getString(cursor.getColumnIndexOrThrow(DatabaseContract.Budgets.COLUMN_USER_ID)),
-                        cursor.getString(cursor.getColumnIndexOrThrow(DatabaseContract.Budgets.COLUMN_CATEGORY_ID))
+                        cursor.getString(cursor.getColumnIndexOrThrow(DatabaseContract.Budgets.COLUMN_CATEGORY_ID)),
+                        cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseContract.Budgets.COLUMN_WARNING_THRESHOLD))
                 );
                 budgets.add(budget);
             } while (cursor.moveToNext());
@@ -184,10 +189,26 @@ public class BudgetDAO {
 
     // Tính tổng tiền đã chi tiêu so với giới hạn
     public double getTotalSpentForBudget(String budgetId) {
+        Budgets budget = getBudgetById(budgetId);
+        if (budget == null) return 0;
+
+        String categoryCondition = "";
+        String[] selectionArgs;
+
+        if ("none".equals(budget.getCategory_id())) {
+            // Ngân sách tổng: lấy tất cả các khoản chi chưa gán ngân sách con hoặc gán vào chính nó
+            categoryCondition = "1=1"; // Có thể filter thêm nếu cần
+            selectionArgs = new String[]{budget.getUser_id(), budget.getStart_date(), budget.getEnd_date()};
+        } else {
+            categoryCondition = DatabaseContract.Expenses.COLUMN_CATEGORY_ID + " = ?";
+            selectionArgs = new String[]{budget.getUser_id(), budget.getCategory_id(), budget.getStart_date(), budget.getEnd_date()};
+        }
+
         String query = "SELECT SUM(" + DatabaseContract.Expenses.COLUMN_AMOUNT + ") " +
                 "FROM " + DatabaseContract.Expenses.TABLE_NAME + " " +
-                "WHERE " + DatabaseContract.Expenses.COLUMN_BUDGET_ID + " = ?";
-        String[] selectionArgs = {budgetId};
+                "WHERE " + DatabaseContract.Expenses.COLUMN_USER_ID + " = ? AND " +
+                categoryCondition + " AND " +
+                "substr(" + DatabaseContract.Expenses.COLUMN_CREATE_AT + ", 1, 10) BETWEEN ? AND ?";
 
         Cursor cursor = db.rawQuery(query, selectionArgs);
         double total = 0;

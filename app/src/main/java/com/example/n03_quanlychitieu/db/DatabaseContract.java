@@ -73,6 +73,7 @@ public class DatabaseContract {
         public static final String COLUMN_DESCRIPTION = "description";
         public static final String COLUMN_USER_ID = "user_id";
         public static final String COLUMN_CATEGORY_ID = "category_id";
+        public static final String COLUMN_WARNING_THRESHOLD = "warning_threshold";
         public static final String CREATE_TABLE =
                 "CREATE TABLE IF NOT EXISTS " + TABLE_NAME + " (" +
                         COLUMN_BUDGET_ID + " TEXT PRIMARY KEY, " +
@@ -82,6 +83,7 @@ public class DatabaseContract {
                         COLUMN_DESCRIPTION + " TEXT, " +
                         COLUMN_USER_ID + " TEXT NOT NULL, " +
                         COLUMN_CATEGORY_ID + " TEXT NOT NULL, " +
+                        COLUMN_WARNING_THRESHOLD + " INTEGER DEFAULT 90, " +
                         "FOREIGN KEY (" + COLUMN_USER_ID + ") REFERENCES " +
                         Users.TABLE_NAME + "(" + Users.COLUMN_USER_ID + ") ON DELETE CASCADE, " +
                         "FOREIGN KEY (" + COLUMN_CATEGORY_ID + ") REFERENCES " +

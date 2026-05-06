@@ -10,8 +10,8 @@ import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 
 public class EmailSender {
-    private final String senderEmail = "khucquynhtrang049@gmail.com";
-    private final String senderPassword = "rieg hgov sirp jxxc";
+    private final String senderEmail = "vuhoanganh1706@gmail.com";
+    private final String senderPassword = "jujg ibgt dhkl ttwx";
 
     public void sendEmail(String recipientEmail, String subject, String body) throws Exception {
         // Cấu hình các thuộc tính cho SMTP

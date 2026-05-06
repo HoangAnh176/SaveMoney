@@ -10,6 +10,10 @@ import android.widget.ImageButton;
 import android.widget.Spinner;
 import android.widget.Toast;
 
+import android.view.Menu;
+import android.view.MenuItem;
+
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
@@ -131,8 +135,51 @@ public class AddExpenseActivity extends AppCompatActivity {
                 tilDescription.setError("Vui lòng nhập mô tả");
                 return;
             }
+
             // Xử lý budgetId
             String finalBudgetId = budgetId != null && budgetId.equals("none") ? null : budgetId;
+
+            // Tự động tìm ngân sách cho danh mục nếu người dùng không chọn ngân sách nào
+            try {
+                if (finalBudgetId == null && categoryId != null && !date.isEmpty()) {
+                    SimpleDateFormat inFmt = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
+                    SimpleDateFormat outFmt = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+                    String dbDateStr = outFmt.format(inFmt.parse(date)); // Chỉ lấy phần yyyy-MM-dd
+
+                    BudgetDAO bDao = new BudgetDAO(databaseHelper.getReadableDatabase());
+                    List<Budgets> userBudgets = bDao.getBudgetsByUser(userId);
+                    Budgets matchedGlobal = null;
+
+                    for (Budgets b : userBudgets) {
+                        if (b.getStart_date() != null && b.getEnd_date() != null) {
+                            // Cắt 10 ký tự đầu (yyyy-MM-dd) để tránh lỗi nếu database có dính chuỗi giờ 'T'
+                            String bStart = b.getStart_date().length() > 10 ? b.getStart_date().substring(0, 10) : b.getStart_date();
+                            String bEnd = b.getEnd_date().length() > 10 ? b.getEnd_date().substring(0, 10) : b.getEnd_date();
+
+                            if (bStart.compareTo(dbDateStr) <= 0 && bEnd.compareTo(dbDateStr) >= 0) {
+                                // Ưu tiên ngân sách cấu hình riêng cho danh mục này
+                                if (categoryId.equals(b.getCategory_id())) {
+                                    finalBudgetId = b.getBudget_id();
+                                    break;
+                                }
+                                // Nếu không có, lưu tạm ngân sách tổng (Tổng ngân sách ID nhóm là "none")
+                                else if ("none".equals(b.getCategory_id())) {
+                                    matchedGlobal = b;
+                                }
+                            }
+                        }
+                    }
+
+                    // Nếu không có ngân sách ưu tiên cho danh mục, thì gán ngân sách "Tổng"
+                    if (finalBudgetId == null && matchedGlobal != null) {
+                        finalBudgetId = matchedGlobal.getBudget_id();
+                    }
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Lỗi tự động tìm ngân sách: " + e.getMessage());
+            }
+
+            final String effectiveBudgetId = finalBudgetId;
 
             try {
                 double amountValue = Double.parseDouble(amount);
@@ -156,20 +203,27 @@ public class AddExpenseActivity extends AppCompatActivity {
                         categoryId,
                         description,
                         formattedDate,
-                        finalBudgetId,
+                        effectiveBudgetId,
                         new DatabaseHelper.SimpleCallback() {
                             @Override
                             public void onSuccess() {
                                 Log.d(TAG, "addExpenseAsync: Success");
-                                Intent resultIntent = new Intent();
-                                resultIntent.putExtra("amount", amount);
-                                resultIntent.putExtra("category", categoryName);
-                                resultIntent.putExtra("description", description);
-                                resultIntent.putExtra("date", date);
-                                resultIntent.putExtra("budget", finalBudgetId);
-                                setResult(RESULT_OK, resultIntent);
 
-                                finish();
+                                runOnUiThread(() -> {
+                                    String warningMsg = checkBudgetWarningAfterExpense(effectiveBudgetId);
+                                    if (warningMsg != null && !warningMsg.isEmpty()) {
+                                        new AlertDialog.Builder(AddExpenseActivity.this)
+                                            .setTitle("Cảnh báo Ngân sách")
+                                            .setMessage(warningMsg)
+                                            .setPositiveButton("Đã hiểu", (dialog, which) -> {
+                                                finishWithResult(date, amount, categoryName, description, effectiveBudgetId);
+                                            })
+                                            .setCancelable(false)
+                                            .show();
+                                    } else {
+                                        finishWithResult(date, amount, categoryName, description, effectiveBudgetId);
+                                    }
+                                });
                             }
 
                             @Override
@@ -239,14 +293,83 @@ public class AddExpenseActivity extends AppCompatActivity {
 
         DatePickerDialog datePickerDialog = new DatePickerDialog(
                 this,
-                (view, selectedYear, selectedMonth, selectedDay) -> {
-                    Calendar selectedDate = Calendar.getInstance();
-                    selectedDate.set(selectedYear, selectedMonth, selectedDay);
-                    SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
-                    etDate.setText(sdf.format(selectedDate.getTime()));
+                (view, year1, monthOfYear, dayOfMonth) -> {
+                    String formattedDate = String.format(Locale.getDefault(), "%02d/%02d/%04d", dayOfMonth, monthOfYear + 1, year1);
+                    etDate.setText(formattedDate);
+                    tilDate.setError(null);
                 },
-                year, month, day);
-        datePickerDialog.getDatePicker().setMaxDate(System.currentTimeMillis());
+                year, month, day
+        );
         datePickerDialog.show();
+    }
+
+    private void finishWithResult(String date, String amount, String categoryName, String description, String finalBudgetId) {
+        Intent resultIntent = new Intent();
+        resultIntent.putExtra("amount", amount);
+        resultIntent.putExtra("category", categoryName);
+        resultIntent.putExtra("description", description);
+        resultIntent.putExtra("date", date);
+        resultIntent.putExtra("budget", finalBudgetId);
+        setResult(RESULT_OK, resultIntent);
+        finish();
+    }
+
+    private String checkBudgetWarningAfterExpense(String budgetId) {
+        Log.d(TAG, "checkBudgetWarningAfterExpense: called with budgetId=" + budgetId);
+        if (budgetId == null || "none".equals(budgetId)) {
+            Log.d(TAG, "checkBudgetWarningAfterExpense: budgetId is null or none, returning null");
+            return null;
+        }
+
+        BudgetDAO budgetDAO = new BudgetDAO(databaseHelper.getReadableDatabase());
+        NotificationDAO notificationDAO = new NotificationDAO(databaseHelper.getWritableDatabase());
+        Budgets budget = budgetDAO.getBudgetById(budgetId);
+
+        if (budget == null) {
+            Log.d(TAG, "checkBudgetWarningAfterExpense: budget not found in DB");
+            return null;
+        }
+
+        double spent = budgetDAO.getTotalSpentForBudget(budgetId);
+        double budgetAmount = budget.getAmount();
+        String budgetDesc = budget.getDescription() != null && !budget.getDescription().isEmpty() ? budget.getDescription() : "chưa rõ";
+
+        Log.d(TAG, "checkBudgetWarningAfterExpense: spent=" + spent + " / budgetAmount=" + budgetAmount);
+
+        int warningThreshold = budget.getWarning_threshold();
+        double warningRatio = warningThreshold / 100.0;
+
+        if (spent > budgetAmount) {
+            Log.d(TAG, "checkBudgetWarningAfterExpense: over budget. msg will show.");
+            String msg = "Bạn đã vượt ngân sách " + budgetDesc + " (Đã chi " + spent + " / " + budgetAmount + ").";
+            Notifications notification = new Notifications(UUID.randomUUID().toString(), msg, false, null, "warn", userId);
+            notificationDAO.insert(notification);
+            return msg;
+        } else if (spent >= budgetAmount * warningRatio) {
+            Log.d(TAG, "checkBudgetWarningAfterExpense: warning ratio met. msg will show.");
+            String msg = "Bạn sắp vượt ngân sách " + budgetDesc + " (Đã chi " + spent + " / " + budgetAmount + ")";
+            Notifications notification = new Notifications(UUID.randomUUID().toString(), msg, false, null, "warn", userId);
+            notificationDAO.insert(notification);
+            return msg;
+        }
+
+        Log.d(TAG, "checkBudgetWarningAfterExpense: spent is safe. returning null.");
+        return null;
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_add_screens, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == R.id.action_notifications) {
+            Intent intent = new Intent(this, com.example.n03_quanlychitieu.ui.sign.notification_user.class);
+            startActivity(intent);
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 }

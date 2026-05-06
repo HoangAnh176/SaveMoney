@@ -28,8 +28,8 @@ import at.favre.lib.crypto.bcrypt.BCrypt;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String TAG = "DatabaseHelper";
-    public static final String DATABASE_NAME = "fin_manager.db";
-    private static final int DATABASE_VERSION = 6;
+    private static final String DATABASE_NAME = "fin_manager.db";
+    private static final int DATABASE_VERSION = 7;
 
     public DatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -58,6 +58,13 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             db.execSQL("DROP TABLE IF EXISTS " + DatabaseContract.Expenses.TABLE_NAME);
             // Tạo lại bảng mới với cấu trúc đã cập nhật
             db.execSQL(DatabaseContract.Expenses.CREATE_TABLE);
+
+            // Add warning threshold to budgets
+            try {
+                db.execSQL("ALTER TABLE " + DatabaseContract.Budgets.TABLE_NAME + " ADD COLUMN " + DatabaseContract.Budgets.COLUMN_WARNING_THRESHOLD + " INTEGER DEFAULT 90");
+            } catch (Exception e) {
+                Log.e(TAG, "Error adding warning_threshold: " + e.getMessage());
+            }
         }
     }
 

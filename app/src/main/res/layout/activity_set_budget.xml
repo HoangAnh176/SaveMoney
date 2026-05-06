@@ -18,7 +18,8 @@ android:fitsSystemWindows="true">
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:paddingBottom="16dp">
+        android:paddingBottom="16dp"
+        android:gravity="center_vertical">
 
         <!-- Nút quay lại bên trái -->
         <ImageButton
@@ -28,16 +29,28 @@ android:fitsSystemWindows="true">
             android:padding="4dp"
             android:src="@drawable/icreturn"
             android:scaleType="centerInside"
-            android:layout_marginRight="76dp"
             android:background="?attr/selectableItemBackgroundBorderless" />
 
         <TextView
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:text="Đặt giới hạn chi tiêu"
             android:textColor="@color/black"
             android:textSize="20sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            android:layout_marginStart="16dp" />
+
+<!--        <ImageButton-->
+<!--            android:id="@+id/btn_settings_budget"-->
+<!--            android:layout_width="30dp"-->
+<!--            android:layout_height="30dp"-->
+<!--            android:padding="4dp"-->
+<!--            android:src="@android:drawable/ic_menu_preferences"-->
+<!--            android:tint="@color/black"-->
+<!--            android:scaleType="centerInside"-->
+<!--            android:background="?attr/selectableItemBackgroundBorderless" />-->
+
     </LinearLayout>
 
     <!-- CardView chứa form -->
@@ -99,7 +112,22 @@ android:fitsSystemWindows="true">
                     android:inputType="numberDecimal" />
             </com.google.android.material.textfield.TextInputLayout>
 
-            <!-- Thời gian bắt đầu (ẩn đi vì lấy tháng hiện tại) -->
+            <!-- Cảnh báo % -->
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/et_warning_threshold"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="% cảnh báo (Mặc định 90%)"
+                    android:inputType="number" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Thời gian bắt đầu (ẩn đi và lấy tháng hiện tại) -->
             <com.google.android.material.textfield.TextInputLayout
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"

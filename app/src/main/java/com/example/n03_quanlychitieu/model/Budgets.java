@@ -8,6 +8,7 @@ public class Budgets {
     private String description;
     private String user_id;
     private String category_id;
+    private int warning_threshold;
 
     public Budgets() {
     }
@@ -20,6 +21,18 @@ public class Budgets {
         this.description = description;
         this.user_id = user_id;
         this.category_id = category_id;
+        this.warning_threshold = 90; // Default to 90%
+    }
+
+    public Budgets (String budget_id, double amount, String start_date, String end_date, String description, String user_id, String category_id, int warning_threshold) {
+        this.budget_id = budget_id;
+        this.amount = amount;
+        this.start_date = start_date;
+        this.end_date = end_date;
+        this.description = description;
+        this.user_id = user_id;
+        this.category_id = category_id;
+        this.warning_threshold = warning_threshold;
     }
 
     public Budgets(String id, String name) {
@@ -83,18 +96,14 @@ public class Budgets {
         this.category_id = category_id;
     }
 
-//    @Override
-//    public String  toString() {
-//        return "Budgets{" +
-//                "budget_id='" + budget_id + '\'' +
-//                ", amount=" + amount +
-//                ", start_date='" + start_date + '\'' +
-//                ", end_date='" + end_date + '\'' +
-//                ", description='" + description + '\'' +
-//                ", user_id='" + user_id + '\'' +
-//                ", category_id='" + category_id + '\'' +
-//                '}';
-//    }
+    public int getWarning_threshold() {
+        return warning_threshold;
+    }
+
+    public void setWarning_threshold(int warning_threshold) {
+        this.warning_threshold = warning_threshold;
+    }
+
     // Thêm phương thức này
     @Override
     public String toString() {

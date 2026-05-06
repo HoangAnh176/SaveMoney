@@ -26,6 +26,12 @@ import com.example.n03_quanlychitieu.ui.sign.LogIn;
 import com.example.n03_quanlychitieu.ui.user.UserProfileActivity;
 import com.example.n03_quanlychitieu.utils.AuthenticationManager;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import androidx.appcompat.app.AlertDialog;
+import com.example.n03_quanlychitieu.dao.BudgetDAO;
+import com.example.n03_quanlychitieu.dao.NotificationDAO;
+import com.example.n03_quanlychitieu.model.Budgets;
+import com.example.n03_quanlychitieu.model.Notifications;
+import java.util.UUID;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -201,13 +207,57 @@ public class MainActivity extends AppCompatActivity {
         }
 
         String currentDateIso = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault()).format(selectedCalendar.getTime());
+        String dbDateStr = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(selectedCalendar.getTime());
 
         if (currentType.equals("expense")) {
-            dbHelper.addExpenseAsync(userId, amount, selectedCategory.getCategory_id(), note, currentDateIso, null, new DatabaseHelper.SimpleCallback() {
+            String autoBudgetId = null;
+            try {
+                BudgetDAO bDao = new BudgetDAO(dbHelper.getReadableDatabase());
+                List<Budgets> userBudgets = bDao.getBudgetsByUser(userId);
+                Budgets matchedGlobal = null;
+                for (Budgets b : userBudgets) {
+                    if (b.getStart_date() != null && b.getEnd_date() != null) {
+                        String bStart = b.getStart_date().length() > 10 ? b.getStart_date().substring(0, 10) : b.getStart_date();
+                        String bEnd = b.getEnd_date().length() > 10 ? b.getEnd_date().substring(0, 10) : b.getEnd_date();
+                        if (bStart.compareTo(dbDateStr) <= 0 && bEnd.compareTo(dbDateStr) >= 0) {
+                            if (selectedCategory.getCategory_id().equals(b.getCategory_id())) {
+                                autoBudgetId = b.getBudget_id();
+                                break;
+                            } else if ("none".equals(b.getCategory_id())) {
+                                matchedGlobal = b;
+                            }
+                        }
+                    }
+                }
+                if (autoBudgetId == null && matchedGlobal != null) {
+                    autoBudgetId = matchedGlobal.getBudget_id();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            final String finalBudgetId = autoBudgetId;
+
+            dbHelper.addExpenseAsync(userId, amount, selectedCategory.getCategory_id(), note, currentDateIso, finalBudgetId, new DatabaseHelper.SimpleCallback() {
                 @Override
                 public void onSuccess() {
-                    Toast.makeText(MainActivity.this, "Đã thêm chi tiêu!", Toast.LENGTH_SHORT).show();
-                    resetForm();
+                    runOnUiThread(() -> {
+                        String warningMsg = checkBudgetWarningAfterExpense(finalBudgetId);
+                        if (warningMsg != null && !warningMsg.isEmpty()) {
+                            new AlertDialog.Builder(MainActivity.this)
+                                .setTitle("Cảnh báo Ngân sách")
+                                .setMessage(warningMsg)
+                                .setPositiveButton("Đã hiểu", (dialog, which) -> {
+                                    Toast.makeText(MainActivity.this, "Đã thêm chi tiêu!", Toast.LENGTH_SHORT).show();
+                                    resetForm();
+                                })
+                                .setCancelable(false)
+                                .show();
+                        } else {
+                            Toast.makeText(MainActivity.this, "Đã thêm chi tiêu!", Toast.LENGTH_SHORT).show();
+                            resetForm();
+                        }
+                    });
                 }
                 @Override
                 public void onError(String errorMessage) {
@@ -228,6 +278,42 @@ public class MainActivity extends AppCompatActivity {
             });
         }
     }
+
+    private String checkBudgetWarningAfterExpense(String budgetId) {
+        if (budgetId == null || "none".equals(budgetId)) {
+            return null;
+        }
+
+        BudgetDAO budgetDAO = new BudgetDAO(dbHelper.getReadableDatabase());
+        NotificationDAO notificationDAO = new NotificationDAO(dbHelper.getWritableDatabase());
+        Budgets budget = budgetDAO.getBudgetById(budgetId);
+
+        if (budget == null) {
+            return null;
+        }
+
+        double spent = budgetDAO.getTotalSpentForBudget(budgetId);
+        double budgetAmount = budget.getAmount();
+        String budgetDesc = budget.getDescription() != null && !budget.getDescription().isEmpty() ? budget.getDescription() : "chưa rõ";
+
+        int warningThreshold = budget.getWarning_threshold();
+        double warningRatio = warningThreshold / 100.0;
+
+        if (spent > budgetAmount) {
+            String msg = "Bạn đã vượt ngân sách " + budgetDesc + " (Đã chi " + spent + " / " + budgetAmount + ").";
+            Notifications notification = new Notifications(UUID.randomUUID().toString(), msg, false, null, "warn", userId);
+            notificationDAO.insert(notification);
+            return msg;
+        } else if (spent >= budgetAmount * warningRatio) {
+            String msg = "Bạn sắp vượt ngân sách " + budgetDesc + " (Đã chi " + spent + " / " + budgetAmount + ")";
+            Notifications notification = new Notifications(UUID.randomUUID().toString(), msg, false, null, "warn", userId);
+            notificationDAO.insert(notification);
+            return msg;
+        }
+
+        return null;
+    }
+
     private void resetForm() {
         etAmount.setText("");
         etNote.setText("");

@@ -8,6 +8,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -46,7 +47,7 @@ public class SetBudgets extends AppCompatActivity implements BudgetAdapter.OnBud
     private BudgetDAO budgetDAO;
     private CategoryDAO categoryDAO;
     private String currentUserId;
-    private TextInputEditText etAmount, etStartDate, etEndDate, etDescription;
+    private TextInputEditText etAmount, etStartDate, etEndDate, etDescription, etWarningThreshold;
     private AutoCompleteTextView actvCategory;
     private com.google.android.material.textfield.TextInputLayout tilCategory;
     private MaterialButton btnSave;
@@ -131,6 +132,7 @@ public class SetBudgets extends AppCompatActivity implements BudgetAdapter.OnBud
         etStartDate = findViewById(R.id.et_start_date);
         etEndDate = findViewById(R.id.et_end_date);
         etDescription = findViewById(R.id.et_description);
+        etWarningThreshold = findViewById(R.id.et_warning_threshold);
         btnSave = findViewById(R.id.btn_save);
         rvBudgets = findViewById(R.id.rv_budgets);
         emptyView = findViewById(R.id.empty_view);
@@ -276,6 +278,9 @@ public class SetBudgets extends AppCompatActivity implements BudgetAdapter.OnBud
         double budgetAmount = budget.getAmount();
         String budgetDesc = budget.getDescription();
 
+        int warningThreshold = budget.getWarning_threshold();
+        double warningRatio = warningThreshold / 100.0;
+
         if (spent > budgetAmount) {
             // Vượt quá ngân sách
             Notifications notification = new Notifications(
@@ -292,13 +297,14 @@ public class SetBudgets extends AppCompatActivity implements BudgetAdapter.OnBud
                         false, null, "info", currentUserId
                 );
                 notificationDAO.insert(deleteNoti);
-                loadBudgets(); // Tải lại danh sách
+                // Cannot call loadBudgets here if we are inside a loop in loadBudgets. 
+                // But it's relatively safe since we just reload data after delete.
             }
-        } else if (spent >= budgetAmount * 0.9) { // 90% ngân sách
+        } else if (spent >= budgetAmount * warningRatio) { 
             // Sắp hết ngân sách
             Notifications notification = new Notifications(
                     UUID.randomUUID().toString(),
-                    "Bạn đã chi tiêu gần hết ngân sách " + budgetDesc,
+                    "Bạn đã chi tiêu đến " + warningThreshold + "% ngân sách " + budgetDesc,
                     false, null, "warn", currentUserId
             );
             notificationDAO.insert(notification);
@@ -318,6 +324,7 @@ public class SetBudgets extends AppCompatActivity implements BudgetAdapter.OnBud
         String categoryName = actvCategory.getText().toString().trim();
         String amountStr = etAmount.getText().toString().trim();
         String description = etDescription.getText().toString().trim();
+        String warningThresholdStr = etWarningThreshold.getText().toString().trim();
 
         if (categoryName.isEmpty()) {
             actvCategory.setError("Vui lòng chọn danh mục");
@@ -352,6 +359,21 @@ public class SetBudgets extends AppCompatActivity implements BudgetAdapter.OnBud
         }
 
         final String finalCategoryId = categoryId;
+        
+        int warningThreshold = 90; // Default
+        if (!warningThresholdStr.isEmpty()) {
+            try {
+                warningThreshold = Integer.parseInt(warningThresholdStr);
+            } catch (NumberFormatException e) {
+                etWarningThreshold.setError("Phần trăm không hợp lệ");
+                return;
+            }
+            if (warningThreshold < 1 || warningThreshold > 100) {
+                etWarningThreshold.setError("Phần trăm phải từ 1 đến 100");
+                return;
+            }
+        }
+        final int finalWarningThreshold = warningThreshold;
 
         // Xác định tháng bắt đầu từ người dùng chọn, nếu rỗng thì dùng biến calendar của class
         String startDateInput = etStartDate.getText() != null ? etStartDate.getText().toString().trim() : "";
@@ -382,7 +404,7 @@ public class SetBudgets extends AppCompatActivity implements BudgetAdapter.OnBud
 
                     terminateOverlappingBudgets(finalCategoryId, currentViewCal);
                     editingBudget = null; // Cờ để tự động tạo mới
-                    proceedSaveBudget(amount, finalCategoryId, description, computedStartDate, computedEndDate);
+                    proceedSaveBudget(amount, finalCategoryId, description, computedStartDate, computedEndDate, finalWarningThreshold);
                 })
                 .setNegativeButton("Thay đổi tháng này và các tháng sau", (dialog, which) -> {
                     Calendar futureCal = Calendar.getInstance();
@@ -390,8 +412,7 @@ public class SetBudgets extends AppCompatActivity implements BudgetAdapter.OnBud
                     String computedEndDate = dateFormat.format(futureCal.getTime());
 
                     terminateOverlappingBudgets(finalCategoryId, currentViewCal);
-                    editingBudget = null; // Để insert mới từ tháng này trở đi
-                    proceedSaveBudget(amount, finalCategoryId, description, computedStartDate, computedEndDate);
+                    proceedSaveBudget(amount, finalCategoryId, description, computedStartDate, "2099-12-31", finalWarningThreshold);
                 })
                 .show();
     }
@@ -426,7 +447,7 @@ public class SetBudgets extends AppCompatActivity implements BudgetAdapter.OnBud
         }
     }
 
-    private void proceedSaveBudget(double amount, String categoryId, String description, String startDate, String endDate) {
+    private void proceedSaveBudget(double amount, String categoryId, String description, String startDate, String endDate, int warningThreshold) {
         long result;
         if (editingBudget != null) {
             // Trường hợp cập nhật budget
@@ -435,6 +456,7 @@ public class SetBudgets extends AppCompatActivity implements BudgetAdapter.OnBud
             editingBudget.setEnd_date(endDate);
             editingBudget.setDescription(description);
             editingBudget.setCategory_id(categoryId);
+            editingBudget.setWarning_threshold(warningThreshold);
 
             result = budgetDAO.update(editingBudget);
             if (result != -1) {
@@ -458,6 +480,7 @@ public class SetBudgets extends AppCompatActivity implements BudgetAdapter.OnBud
             newBudget.setDescription(description);
             newBudget.setUser_id(currentUserId);
             newBudget.setCategory_id(categoryId);
+            newBudget.setWarning_threshold(warningThreshold);
 
             // Save to database
             result = budgetDAO.insert(newBudget);
@@ -498,6 +521,7 @@ public class SetBudgets extends AppCompatActivity implements BudgetAdapter.OnBud
         etStartDate.setText("");
         etEndDate.setText("");
         etDescription.setText("");
+        etWarningThreshold.setText("");
         clearEditingState();
     }
 
@@ -511,6 +535,7 @@ public class SetBudgets extends AppCompatActivity implements BudgetAdapter.OnBud
         etStartDate.setText(budget.getStart_date());
         etEndDate.setText(budget.getEnd_date());
         etDescription.setText(budget.getDescription());
+        etWarningThreshold.setText(String.valueOf(budget.getWarning_threshold()));
 
         btnSave.setText("Cập nhật");
 
