@@ -75,6 +75,14 @@ public class CalendarActivity extends AppCompatActivity {
         tvTotalExpense = findViewById(R.id.tv_total_expense);
         tvTotalAll = findViewById(R.id.tv_total_all);
 
+        android.widget.ImageButton btnNotifications = findViewById(R.id.btn_notifications);
+        if (btnNotifications != null) {
+            btnNotifications.setOnClickListener(v -> {
+                Intent intent = new Intent(CalendarActivity.this, com.example.n03_quanlychitieu.ui.sign.notification_user.class);
+                startActivity(intent);
+            });
+        }
+
         rvTransactions.setLayoutManager(new LinearLayoutManager(this));
 
         bottomNav.setSelectedItemId(R.id.nav_calendar);

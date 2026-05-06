@@ -29,17 +29,29 @@
                 android:gravity="center"
                 android:background="#FF9800"
                 android:checked="true"/>
+
             <RadioButton
                 android:id="@+id/rb_yearly"
                 android:layout_width="100dp"
                 android:layout_height="match_parent"
-                android:text="Hàng năm"
+                android:background="#F5F5F5"
                 android:button="@null"
-                android:textColor="#FF9800"
                 android:gravity="center"
-                android:background="#F5F5F5"/>
+                android:text="Hàng năm"
+                android:textColor="#FF9800" />
         </RadioGroup>
+
         <View android:layout_width="0dp" android:layout_weight="1" android:layout_height="0dp"/>
+
+        <ImageButton
+            android:id="@+id/btn_notifications"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:src="@drawable/ic_notifications"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:scaleType="centerInside"
+            android:contentDescription="Thông báo"
+            android:padding="4dp" />
     </LinearLayout>
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"

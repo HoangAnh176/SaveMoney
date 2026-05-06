@@ -94,6 +94,14 @@ public class MainActivity extends AppCompatActivity {
         tvPrevDate = findViewById(R.id.tv_prev_date);
         tvNextDate = findViewById(R.id.tv_next_date);
 
+        ImageView btnNotifications = findViewById(R.id.btn_notifications);
+        if (btnNotifications != null) {
+            btnNotifications.setOnClickListener(v -> {
+                Intent intent = new Intent(MainActivity.this, com.example.n03_quanlychitieu.ui.sign.notification_user.class);
+                startActivity(intent);
+            });
+        }
+
         // Set Current Date
         updateDateDisplay();
 

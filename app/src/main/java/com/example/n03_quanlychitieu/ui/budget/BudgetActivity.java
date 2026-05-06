@@ -62,6 +62,15 @@ public class BudgetActivity extends AppCompatActivity {
         ivNextMonth = findViewById(R.id.iv_next_month);
         tvMonth = findViewById(R.id.tv_month);
         rvBudget.setLayoutManager(new LinearLayoutManager(this));
+
+        android.widget.ImageButton btnNotifications = findViewById(R.id.btn_notifications);
+        if (btnNotifications != null) {
+            btnNotifications.setOnClickListener(v -> {
+                Intent intent = new Intent(BudgetActivity.this, com.example.n03_quanlychitieu.ui.sign.notification_user.class);
+                startActivity(intent);
+            });
+        }
+
         bottomNav.setSelectedItemId(R.id.nav_budget);
     }
     private void updateDateRange() {

@@ -86,6 +86,14 @@ public class ReportTransaction extends AppCompatActivity {
         rgReportType = findViewById(R.id.rg_report_type);
         bottomNav = findViewById(R.id.bottom_nav);
         rvCategories.setLayoutManager(new LinearLayoutManager(this));
+
+        android.widget.ImageButton btnNotifications = findViewById(R.id.btn_notifications);
+        if (btnNotifications != null) {
+            btnNotifications.setOnClickListener(v -> {
+                Intent intent = new Intent(ReportTransaction.this, notification_user.class);
+                startActivity(intent);
+            });
+        }
     }
     private void setupListeners() {
         tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {

@@ -139,6 +139,14 @@ public class SetBudgets extends AppCompatActivity implements BudgetAdapter.OnBud
         bottomSheet = findViewById(R.id.bottom_sheet);
         btn_back = findViewById(R.id.btn_back_budget);
 
+        ImageButton btnNotifications = findViewById(R.id.btn_notifications);
+        if (btnNotifications != null) {
+            btnNotifications.setOnClickListener(v -> {
+                android.content.Intent intent = new android.content.Intent(SetBudgets.this, notification_user.class);
+                startActivity(intent);
+            });
+        }
+
         notificationDAO = new NotificationDAO(dbHelper.getWritableDatabase());
         budgetDAO = new BudgetDAO(dbHelper.getReadableDatabase());
     }
