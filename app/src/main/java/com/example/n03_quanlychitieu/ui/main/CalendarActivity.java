@@ -104,7 +104,9 @@ public class CalendarActivity extends AppCompatActivity {
                   finish();
                   return true;
             } else if (itemId == R.id.nav_more) {
-                startActivity(new Intent(CalendarActivity.this, UserProfileActivity.class));
+                Intent intent = new Intent(CalendarActivity.this, MoreActivity.class);
+                intent.putExtra("userId", userId);
+                startActivity(intent);
                 overridePendingTransition(0, 0);
                 finish();
                 return true;
@@ -237,6 +239,15 @@ public class CalendarActivity extends AppCompatActivity {
         }
 
         rvTransactions.setAdapter(new TransactionAdapter(flattenedList, transaction -> {
+
+            if (transaction.fixedId != null) {
+                Intent intent = new Intent(CalendarActivity.this, FixedTransactionActivity.class);
+                intent.putExtra("userId", userId);
+                intent.putExtra("transactionId", transaction.fixedId);
+                startActivity(intent);
+                return;
+            }
+
             if (transaction.type.equals("expense")) {
                 Intent intent = new Intent(CalendarActivity.this, UpdateExpenseActivity.class);
                 intent.putExtra("expenseID", transaction.id);

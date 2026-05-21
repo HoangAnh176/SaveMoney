@@ -148,9 +148,11 @@ public class MainActivity extends AppCompatActivity {
                   finish();
                   return true;
               } else if (item.getItemId() == R.id.nav_more) {
-                Intent intent = new Intent(MainActivity.this, UserProfileActivity.class);
+                Intent intent = new Intent(MainActivity.this, MoreActivity.class);
                 intent.putExtra("userId", userId);
                 startActivity(intent);
+                overridePendingTransition(0, 0);
+                finish();
                 return true;
             }
             return true;

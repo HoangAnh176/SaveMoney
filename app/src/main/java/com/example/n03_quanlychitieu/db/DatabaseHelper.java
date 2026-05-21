@@ -13,6 +13,8 @@ import android.util.Log;
 import com.example.n03_quanlychitieu.model.Budgets;
 import com.example.n03_quanlychitieu.model.Categories;
 import com.example.n03_quanlychitieu.model.Expenses;
+import com.example.n03_quanlychitieu.model.FixedTransaction;
+import com.example.n03_quanlychitieu.model.Incomes;
 import com.example.n03_quanlychitieu.model.Users;
 import com.example.n03_quanlychitieu.model.Transaction;
 import com.example.n03_quanlychitieu.ui.expense.ViewExpenseActivity;
@@ -29,7 +31,7 @@ import at.favre.lib.crypto.bcrypt.BCrypt;
 public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String TAG = "DatabaseHelper";
     private static final String DATABASE_NAME = "fin_manager.db";
-    private static final int DATABASE_VERSION = 7;
+    private static final int DATABASE_VERSION = 9;
 
     public DatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -49,6 +51,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.execSQL(DatabaseContract.Budgets.CREATE_TABLE);
         db.execSQL(DatabaseContract.Incomes.CREATE_TABLE);
         db.execSQL(DatabaseContract.Expenses.CREATE_TABLE);
+        db.execSQL(DatabaseContract.FixedTransactions.CREATE_TABLE);
     }
 
     @Override
@@ -64,6 +67,17 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 db.execSQL("ALTER TABLE " + DatabaseContract.Budgets.TABLE_NAME + " ADD COLUMN " + DatabaseContract.Budgets.COLUMN_WARNING_THRESHOLD + " INTEGER DEFAULT 90");
             } catch (Exception e) {
                 Log.e(TAG, "Error adding warning_threshold: " + e.getMessage());
+            }
+        }
+        if (oldVersion < 8) {
+            db.execSQL(DatabaseContract.FixedTransactions.CREATE_TABLE);
+        }
+        if (oldVersion < 9) {
+            try {
+                db.execSQL("ALTER TABLE " + DatabaseContract.Incomes.TABLE_NAME + " ADD COLUMN " + DatabaseContract.Incomes.COLUMN_FIXED_ID + " TEXT");
+                db.execSQL("ALTER TABLE " + DatabaseContract.Expenses.TABLE_NAME + " ADD COLUMN " + DatabaseContract.Expenses.COLUMN_FIXED_ID + " TEXT");
+            } catch (Exception e) {
+                Log.e(TAG, "Error adding fixed_id column: " + e.getMessage());
             }
         }
     }
@@ -375,10 +389,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         if (userId == null) return list;
         SQLiteDatabase db = this.getReadableDatabase();
 
-        String query = "SELECT e.expense_id as id, e.amount, e.description, e.create_at, 'expense' as type, c.name, c.icon, c.color, e.category_id, e.budget_id " +
+        String query = "SELECT e.expense_id as id, e.amount, e.description, e.create_at, 'expense' as type, c.name, c.icon, c.color, e.category_id, e.budget_id, e.fixed_id " +
                        "FROM Expenses e LEFT JOIN Categories c ON e.category_id = c.category_id WHERE e.user_id = ? AND e.create_at >= ? AND e.create_at <= ? " +
                        "UNION ALL " +
-                       "SELECT i.income_id as id, i.amount, i.description, i.create_at, 'income' as type, c.name, c.icon, c.color, i.category_id, NULL as budget_id " +
+                       "SELECT i.income_id as id, i.amount, i.description, i.create_at, 'income' as type, c.name, c.icon, c.color, i.category_id, NULL as budget_id, i.fixed_id " +
                        "FROM Incomes i LEFT JOIN Categories c ON i.category_id = c.category_id WHERE i.user_id = ? AND i.create_at >= ? AND i.create_at <= ? " +
                        "ORDER BY create_at DESC";
 
@@ -394,10 +408,13 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 cursor.getString(6), // category icon
                 cursor.getString(7), // category color
                 cursor.getString(8), // category id
-                cursor.getString(9)  // budget id
+                cursor.getString(9), // budget id
+                cursor.getString(10) // fixed id
             ));
         }
         if (cursor != null) cursor.close();
+
+
         return list;
     }
 
@@ -948,5 +965,87 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             cursor.close();
         }
         return categories;
+    }
+
+    public List<Incomes> getAllIncomesById(String Id) {
+        List<Incomes> list = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery("SELECT * FROM Incomes WHERE user_id = ?", new String[]{Id});
+        while (cursor != null && cursor.moveToNext()) {
+            list.add(new Incomes(
+                    cursor.getString(cursor.getColumnIndexOrThrow(DatabaseContract.Incomes.COLUMN_INCOME_ID)),
+                    cursor.getDouble(cursor.getColumnIndexOrThrow(DatabaseContract.Incomes.COLUMN_AMOUNT)),
+                    cursor.getString(cursor.getColumnIndexOrThrow(DatabaseContract.Incomes.COLUMN_DESCRIPTION)),
+                    cursor.getString(cursor.getColumnIndexOrThrow(DatabaseContract.Incomes.COLUMN_CREATE_AT)),
+                    cursor.getString(cursor.getColumnIndexOrThrow(DatabaseContract.Incomes.COLUMN_USER_ID)),
+                    cursor.getString(cursor.getColumnIndexOrThrow(DatabaseContract.Incomes.COLUMN_CATEGORY_ID))
+            ));
+        }
+        if (cursor != null) cursor.close();
+        return list;
+    }
+
+    public List<FixedTransaction> getFixedTransactions(String userId) {
+        List<FixedTransaction> list = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        String query = "SELECT f.id, f.user_id, f.type, f.amount, f.category_id, c.name, c.icon, c.color, f.description, f.frequency, f.start_date, f.end_date " +
+                       "FROM " + DatabaseContract.FixedTransactions.TABLE_NAME + " f " +
+                       "LEFT JOIN " + DatabaseContract.Categories.TABLE_NAME + " c ON f.category_id = c.category_id " +
+                       "WHERE f.user_id = ?";
+        Cursor cursor = db.rawQuery(query, new String[]{userId});
+        while (cursor != null && cursor.moveToNext()) {
+            list.add(new FixedTransaction(
+                    cursor.getString(0),
+                    cursor.getString(1),
+                    cursor.getString(2),
+                    cursor.getDouble(3),
+                    cursor.getString(4),
+                    cursor.getString(5),
+                    cursor.getString(6),
+                    cursor.getString(7),
+                    cursor.getString(8),
+                    cursor.getString(9),
+                    cursor.getString(10),
+                    cursor.getString(11)
+            ));
+        }
+        if (cursor != null) cursor.close();
+        return list;
+    }
+
+    public FixedTransaction getFixedTransactionById(String id) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        String query = "SELECT f.id, f.user_id, f.type, f.amount, f.category_id, c.name, c.icon, c.color, f.description, f.frequency, f.start_date, f.end_date " +
+                       "FROM " + DatabaseContract.FixedTransactions.TABLE_NAME + " f " +
+                       "LEFT JOIN " + DatabaseContract.Categories.TABLE_NAME + " c ON f.category_id = c.category_id " +
+                       "WHERE f.id = ?";
+        Cursor cursor = db.rawQuery(query, new String[]{id});
+        FixedTransaction transaction = null;
+        if (cursor != null && cursor.moveToFirst()) {
+            transaction = new FixedTransaction(
+                    cursor.getString(0),
+                    cursor.getString(1),
+                    cursor.getString(2),
+                    cursor.getDouble(3),
+                    cursor.getString(4),
+                    cursor.getString(5),
+                    cursor.getString(6),
+                    cursor.getString(7),
+                    cursor.getString(8),
+                    cursor.getString(9),
+                    cursor.getString(10),
+                    cursor.getString(11)
+            );
+        }
+        if (cursor != null) cursor.close();
+        return transaction;
+    }
+
+    public void deleteFixedTransaction(String transactionId) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.delete(DatabaseContract.Expenses.TABLE_NAME, DatabaseContract.Expenses.COLUMN_FIXED_ID + "=?", new String[]{transactionId});
+        db.delete(DatabaseContract.Incomes.TABLE_NAME, DatabaseContract.Incomes.COLUMN_FIXED_ID + "=?", new String[]{transactionId});
+        db.delete(DatabaseContract.FixedTransactions.TABLE_NAME, DatabaseContract.FixedTransactions.COLUMN_ID + "=?", new String[]{transactionId});
+        db.close();
     }
 }

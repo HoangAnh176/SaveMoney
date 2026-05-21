@@ -134,23 +134,16 @@ public class CategoryDetailAdapter extends RecyclerView.Adapter<CategoryDetailAd
         public String desc;
         public String catId;
         public String rawDate;
+        public String fixedId;
 
         // Yearly
-        public DetailItem(String monthOrDayStr, double amount) {
-            this.monthOrDayStr = monthOrDayStr;
-            this.amount = amount;
-        }
-
-        // Monthly (Daily)
-        public DetailItem(String dateStr, double amount, String catName, String icon) {
+        public DetailItem(String dateStr, double amount) {
             this.dateStr = dateStr;
             this.amount = amount;
-            this.catName = catName;
-            this.icon = icon;
         }
 
         // Monthly (Daily) with extra details
-        public DetailItem(String dateStr, double amount, String catName, String icon, String id, String desc, String catId, String rawDate) {
+        public DetailItem(String dateStr, double amount, String catName, String icon, String id, String desc, String catId, String rawDate, String fixedId) {
             this.dateStr = dateStr;
             this.amount = amount;
             this.catName = catName;
@@ -159,6 +152,7 @@ public class CategoryDetailAdapter extends RecyclerView.Adapter<CategoryDetailAd
             this.desc = desc;
             this.catId = catId;
             this.rawDate = rawDate;
+            this.fixedId = fixedId;
         }
     }
 }

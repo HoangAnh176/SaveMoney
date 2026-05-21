@@ -98,6 +98,7 @@ public class DatabaseContract {
         public static final String COLUMN_CREATE_AT = "create_at";
         public static final String COLUMN_USER_ID = "user_id";
         public static final String COLUMN_CATEGORY_ID = "category_id";
+        public static final String COLUMN_FIXED_ID = "fixed_id";
         public static final String CREATE_TABLE =
                 "CREATE TABLE IF NOT EXISTS " + TABLE_NAME + " (" +
                         COLUMN_INCOME_ID + " TEXT PRIMARY KEY, " +
@@ -106,12 +107,14 @@ public class DatabaseContract {
                         COLUMN_CREATE_AT + " TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
                         COLUMN_USER_ID + " TEXT NOT NULL, " +
                         COLUMN_CATEGORY_ID + " TEXT NOT NULL, " +
+                        COLUMN_FIXED_ID + " TEXT, " +
                         "FOREIGN KEY (" + COLUMN_USER_ID + ") REFERENCES " +
                         Users.TABLE_NAME + "(" + Users.COLUMN_USER_ID + ") ON DELETE CASCADE, " +
                         "FOREIGN KEY (" + COLUMN_CATEGORY_ID + ") REFERENCES " +
                         Categories.TABLE_NAME + "(" + Categories.COLUMN_CATEGORY_ID + ") ON DELETE CASCADE" +
                         ")";
     }
+
     public static class Expenses {
         public static final String TABLE_NAME = "expenses";
         public static final String COLUMN_EXPENSE_ID = "expense_id";
@@ -121,6 +124,7 @@ public class DatabaseContract {
         public static final String COLUMN_USER_ID = "user_id";
         public static final String COLUMN_CATEGORY_ID = "category_id";
         public static final String COLUMN_BUDGET_ID = "budget_id";
+        public static final String COLUMN_FIXED_ID = "fixed_id";
         public static final String CREATE_TABLE =
                 "CREATE TABLE IF NOT EXISTS " + TABLE_NAME + " (" +
                         COLUMN_EXPENSE_ID + " TEXT PRIMARY KEY, " +
@@ -130,12 +134,44 @@ public class DatabaseContract {
                         COLUMN_USER_ID + " TEXT NOT NULL, " +
                         COLUMN_CATEGORY_ID + " TEXT NOT NULL, " +
                         COLUMN_BUDGET_ID + " TEXT, " +
+                        COLUMN_FIXED_ID + " TEXT, " +
                         "FOREIGN KEY (" + COLUMN_USER_ID + ") REFERENCES " +
                         Users.TABLE_NAME + "(" + Users.COLUMN_USER_ID + ") ON DELETE CASCADE, " +
                         "FOREIGN KEY (" + COLUMN_CATEGORY_ID + ") REFERENCES " +
                         Categories.TABLE_NAME + "(" + Categories.COLUMN_CATEGORY_ID + ") ON DELETE CASCADE, " +
                         "FOREIGN KEY (" + COLUMN_BUDGET_ID + ") REFERENCES " +
                         Budgets.TABLE_NAME + "(" + Budgets.COLUMN_BUDGET_ID + ") ON DELETE SET NULL" +
+                        ")";
+    }
+    public static class FixedTransactions {
+        public static final String TABLE_NAME = "fixed_transactions";
+        public static final String COLUMN_ID = "id";
+        public static final String COLUMN_USER_ID = "user_id";
+        public static final String COLUMN_TYPE = "type"; // 'income' or 'expense'
+        public static final String COLUMN_AMOUNT = "amount";
+        public static final String COLUMN_CATEGORY_ID = "category_id";
+        public static final String COLUMN_DESCRIPTION = "description";
+        public static final String COLUMN_FREQUENCY = "frequency"; // 'none', 'daily', 'weekly', 'monthly', 'yearly', etc.
+        public static final String COLUMN_START_DATE = "start_date";
+        public static final String COLUMN_END_DATE = "end_date";
+        public static final String COLUMN_WEEKEND_ACTION = "weekend_action"; // 'do_nothing', 'skip', etc.
+
+        public static final String CREATE_TABLE =
+                "CREATE TABLE IF NOT EXISTS " + TABLE_NAME + " (" +
+                        COLUMN_ID + " TEXT PRIMARY KEY, " +
+                        COLUMN_USER_ID + " TEXT NOT NULL, " +
+                        COLUMN_TYPE + " TEXT NOT NULL, " +
+                        COLUMN_AMOUNT + " REAL NOT NULL, " +
+                        COLUMN_CATEGORY_ID + " TEXT NOT NULL, " +
+                        COLUMN_DESCRIPTION + " TEXT, " +
+                        COLUMN_FREQUENCY + " TEXT NOT NULL, " +
+                        COLUMN_START_DATE + " TIMESTAMP NOT NULL, " +
+                        COLUMN_END_DATE + " TIMESTAMP, " +
+                        COLUMN_WEEKEND_ACTION + " TEXT, " +
+                        "FOREIGN KEY (" + COLUMN_USER_ID + ") REFERENCES " +
+                        Users.TABLE_NAME + "(" + Users.COLUMN_USER_ID + ") ON DELETE CASCADE, " +
+                        "FOREIGN KEY (" + COLUMN_CATEGORY_ID + ") REFERENCES " +
+                        Categories.TABLE_NAME + "(" + Categories.COLUMN_CATEGORY_ID + ") ON DELETE CASCADE" +
                         ")";
     }
 }

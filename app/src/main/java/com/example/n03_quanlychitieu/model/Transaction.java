@@ -11,9 +11,10 @@ public class Transaction {
     public String categoryColor;
     public String categoryId;
     public String budgetId;
+    public String fixedId;
 
     public Transaction(String id, double amount, String description, String date, String type,
-                       String categoryName, String categoryIcon, String categoryColor, String categoryId, String budgetId) {
+                       String categoryName, String categoryIcon, String categoryColor, String categoryId, String budgetId, String fixedId) {
         this.id = id;
         this.amount = amount;
         this.description = description;
@@ -24,5 +25,6 @@ public class Transaction {
         this.categoryColor = categoryColor;
         this.categoryId = categoryId;
         this.budgetId = budgetId;
+        this.fixedId = fixedId;
     }
 }

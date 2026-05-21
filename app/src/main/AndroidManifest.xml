@@ -35,6 +35,9 @@
         <activity android:name=".ui.category.AddCategoryActivity" />
 
         <activity android:name=".ui.user.UserProfileActivity" />
+        <activity android:name=".ui.main.MoreActivity" />
+        <activity android:name=".ui.main.FixedTransactionActivity" />
+        <activity android:name=".ui.main.FixedTransactionsListActivity" />
         <activity
             android:name=".ui.income.ViewIncomeActivity"
             android:exported="false"/>

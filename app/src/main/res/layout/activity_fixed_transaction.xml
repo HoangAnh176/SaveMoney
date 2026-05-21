@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#F5F5F5">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="#FFFFFF">
+
+        <LinearLayout
+            android:id="@+id/btn_back_form"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="16dp"
+            android:background="?attr/selectableItemBackground">
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_back"
+                app:tint="#FF9800"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:text="Thu chi cố..."
+                android:textColor="#FF9800"
+                android:textSize="16sp"/>
+        </LinearLayout>
+
+        <RadioGroup
+            android:id="@+id/rg_type"
+            android:layout_width="0dp"
+            android:layout_height="32dp"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:background="@drawable/bg_toggle"
+            android:layout_marginHorizontal="16dp">
+
+            <RadioButton
+                android:id="@+id/rb_expense"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="Chi tiêu"
+                android:textColor="@color/color_toggle_text"
+                android:textSize="14sp"
+                android:button="@null"
+                android:background="@drawable/bg_toggle_item"
+                android:checked="true"/>
+            <RadioButton
+                android:id="@+id/rb_income"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="Thu nhập"
+                android:textColor="@color/color_toggle_text"
+                android:textSize="14sp"
+                android:button="@null"
+                android:background="@drawable/bg_toggle_item"/>
+        </RadioGroup>
+
+        <TextView
+            android:id="@+id/btn_save_fixed"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:text="Lưu"
+            android:textColor="#FF9800"
+            android:textSize="16sp"
+            android:paddingHorizontal="16dp"
+            android:background="?attr/selectableItemBackground"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/ll_delete_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginTop="8dp"
+        android:visibility="gone">
+        <Button
+            android:id="@+id/btn_delete_fixed"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Xóa giao dịch này"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#F44336" />
+    </LinearLayout>
+
+    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#E0E0E0" android:layout_marginTop="8dp"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="#FFFFFF"
+        android:layout_marginTop="16dp"
+        android:padding="16dp">
+
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:paddingVertical="12dp">
+            <TextView android:layout_width="120dp" android:layout_height="wrap_content" android:text="Tiêu đề" android:textSize="16sp" android:textStyle="bold" android:textColor="#424242"/>
+            <EditText android:id="@+id/et_desc" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:background="@null" android:hint="Chưa nhập" android:textSize="16sp" android:paddingStart="8dp"/>
+        </LinearLayout>
+        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F5F5F5"/>
+
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:paddingVertical="12dp">
+            <TextView android:layout_width="120dp" android:layout_height="wrap_content" android:text="Số tiền" android:textSize="16sp" android:textStyle="bold" android:textColor="#424242"/>
+            <EditText android:id="@+id/et_amount" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:background="@null" android:hint="Chưa nhập" android:inputType="numberDecimal" android:textSize="16sp" android:paddingStart="8dp"/>
+        </LinearLayout>
+        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F5F5F5"/>
+
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:paddingVertical="12dp">
+            <TextView android:layout_width="120dp" android:layout_height="wrap_content" android:text="Danh mục" android:textSize="16sp" android:textStyle="bold" android:textColor="#424242"/>
+            <Spinner android:id="@+id/sp_category" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:background="@null"/>
+            <ImageView android:layout_width="20dp" android:layout_height="20dp" android:src="@drawable/ic_next" app:tint="#BDBDBD"/>
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="#FFFFFF"
+        android:layout_marginTop="16dp"
+        android:padding="16dp">
+
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:paddingVertical="12dp">
+            <TextView android:layout_width="120dp" android:layout_height="wrap_content" android:text="Lặp lại" android:textSize="16sp" android:textStyle="bold" android:textColor="#424242"/>
+            <Spinner android:id="@+id/sp_frequency" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:background="@null"/>
+            <ImageView android:layout_width="20dp" android:layout_height="20dp" android:src="@drawable/ic_next" app:tint="#BDBDBD"/>
+        </LinearLayout>
+        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F5F5F5"/>
+
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:paddingVertical="12dp">
+            <TextView android:layout_width="120dp" android:layout_height="wrap_content" android:text="Bắt đầu" android:textSize="16sp" android:textStyle="bold" android:textColor="#424242"/>
+            <TextView android:id="@+id/tv_start_date" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="Chọn ngày" android:textSize="16sp" android:textColor="#424242" android:paddingStart="8dp"/>
+            <ImageView android:layout_width="20dp" android:layout_height="20dp" android:src="@drawable/ic_next" app:tint="#BDBDBD"/>
+        </LinearLayout>
+        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F5F5F5"/>
+
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:paddingVertical="12dp">
+            <TextView android:layout_width="120dp" android:layout_height="wrap_content" android:text="Kết thúc" android:textSize="16sp" android:textStyle="bold" android:textColor="#424242"/>
+            <TextView android:id="@+id/tv_end_date" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="Không" android:textSize="16sp" android:textColor="#424242" android:paddingStart="8dp"/>
+            <ImageView android:layout_width="20dp" android:layout_height="20dp" android:src="@drawable/ic_next" app:tint="#BDBDBD"/>
+        </LinearLayout>
+        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F5F5F5"/>
+
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Nếu Ngày kết thúc là &quot;Không&quot;, xin lưu ý rằng chi phí cố định sẽ không được hiển thị trên lịch ngay lập tức, trừ khi đó là một ngày tương ứng. Ngược lại, nếu bạn đặt Ngày kết thúc, nó sẽ được hiển thị luôn trên lịch và màn hình báo cáo."
+        android:padding="16dp"
+        android:textColor="#757575"
+        android:textSize="14sp"
+        android:lineSpacingExtra="4dp"/>
+
+</LinearLayout>

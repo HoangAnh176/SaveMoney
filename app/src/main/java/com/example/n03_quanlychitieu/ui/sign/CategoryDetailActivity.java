@@ -12,10 +12,7 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import com.example.n03_quanlychitieu.R;
-import com.example.n03_quanlychitieu.adapter.CategoryDetailAdapter;
-import com.example.n03_quanlychitieu.db.DatabaseHelper;
-import com.example.n03_quanlychitieu.utils.AuthenticationManager;
+
 import android.content.Intent;
 import com.github.mikephil.charting.charts.BarChart;
 import com.github.mikephil.charting.components.XAxis;
@@ -23,6 +20,13 @@ import com.github.mikephil.charting.data.BarData;
 import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
+
+import com.example.n03_quanlychitieu.R;
+import com.example.n03_quanlychitieu.adapter.CategoryDetailAdapter;
+import com.example.n03_quanlychitieu.db.DatabaseHelper;
+import com.example.n03_quanlychitieu.ui.main.FixedTransactionActivity;
+import com.example.n03_quanlychitieu.utils.AuthenticationManager;
+
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -136,7 +140,7 @@ public class CategoryDetailActivity extends AppCompatActivity {
             String table = isExpense ? "expenses" : "incomes";
             String idVal = isExpense ? "expense_id" : "income_id";
 
-            String query = "SELECT e.amount, e.create_at, c.icon, e." + idVal + ", e.description, e.category_id FROM " + table + " e " +
+            String query = "SELECT e.amount, e.create_at, c.icon, e." + idVal + ", e.description, e.category_id, e.fixed_id FROM " + table + " e " +
                     "JOIN categories c ON e.category_id = c.category_id " +
                     "WHERE e.user_id = ? AND e.category_id = ?";
             Cursor c = db.rawQuery(query, new String[]{userId, categoryId});
@@ -165,6 +169,7 @@ public class CategoryDetailActivity extends AppCompatActivity {
                 String transId = c.getString(3);
                 String desc = c.getString(4);
                 String catId = c.getString(5);
+                String fixedId = c.getString(6);
 
                 Date transDate = parseDate(dateStr);
                 if (transDate == null) continue;
@@ -194,7 +199,7 @@ public class CategoryDetailActivity extends AppCompatActivity {
                     
                     if (!isYearlyMode) {
                        String listDateStr = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(transDate);
-                       items.add(new CategoryDetailAdapter.DetailItem(listDateStr, amount, categoryName, icon, transId, desc, catId, dateStr));
+                       items.add(new CategoryDetailAdapter.DetailItem(listDateStr, amount, categoryName, icon, transId, desc, catId, dateStr, fixedId));
                     }
                 }
             }
@@ -318,6 +323,16 @@ public class CategoryDetailActivity extends AppCompatActivity {
                     @Override
                     public void onTransactionClick(CategoryDetailAdapter.DetailItem item) {
                         if (!isYearlyMode && item.id != null) {
+
+                            if (item.fixedId != null) {
+                                Intent intent = new Intent(CategoryDetailActivity.this, FixedTransactionActivity.class);
+                                String uid = AuthenticationManager.getInstance(CategoryDetailActivity.this).getCurrentUser().getUser_id();
+                                intent.putExtra("userId", uid);
+                                intent.putExtra("transactionId", item.fixedId);
+                                startActivity(intent);
+                                return;
+                            }
+
                             Intent intent;
                             if (isExpense) {
                                 intent = new Intent(CategoryDetailActivity.this, com.example.n03_quanlychitieu.ui.expense.UpdateExpenseActivity.class);

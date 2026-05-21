@@ -300,12 +300,14 @@ public class ReportTransaction extends AppCompatActivity {
                   finish();
                   return true;
               } else if (item.getItemId() == R.id.nav_more) {
-                String userId = authManager.getCurrentUser() != null ? authManager.getCurrentUser().getUser_id() : null;
-                Intent intent = new Intent(ReportTransaction.this, UserProfileActivity.class);
-                intent.putExtra("userId", userId);
+                String uId = authManager.getCurrentUser() != null ? authManager.getCurrentUser().getUser_id() : "";
+                Intent intent = new Intent(ReportTransaction.this, com.example.n03_quanlychitieu.ui.main.MoreActivity.class);
+                intent.putExtra("userId", uId);
                 startActivity(intent);
+                overridePendingTransition(0, 0);
+                finish();
                 return true;
-            }
+              }
             return true;
         });
     }

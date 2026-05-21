@@ -129,9 +129,11 @@ public class BudgetActivity extends AppCompatActivity {
                 finish();
                 return true;
             } else if (item.getItemId() == R.id.nav_more) {
-                Intent intent = new Intent(BudgetActivity.this, UserProfileActivity.class);
+                Intent intent = new Intent(BudgetActivity.this, com.example.n03_quanlychitieu.ui.main.MoreActivity.class);
                 intent.putExtra("userId", userId);
                 startActivity(intent);
+                overridePendingTransition(0, 0);
+                finish();
                 return true;
             } else if (item.getItemId() == R.id.nav_budget) {
                  return true;
