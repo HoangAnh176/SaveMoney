@@ -214,7 +214,7 @@ public class SetBudgets extends AppCompatActivity implements BudgetAdapter.OnBud
                 categoryNames
         );
         actvCategory.setAdapter(categoryAdapter);
-        
+
         android.content.Intent intent = getIntent();
         if (intent != null && intent.hasExtra("categoryName")) {
             String presetCategory = intent.getStringExtra("categoryName");
@@ -308,7 +308,7 @@ public class SetBudgets extends AppCompatActivity implements BudgetAdapter.OnBud
                 // Cannot call loadBudgets here if we are inside a loop in loadBudgets. 
                 // But it's relatively safe since we just reload data after delete.
             }
-        } else if (spent >= budgetAmount * warningRatio) { 
+        } else if (spent >= budgetAmount * warningRatio) {
             // Sắp hết ngân sách
             Notifications notification = new Notifications(
                     UUID.randomUUID().toString(),
@@ -367,7 +367,7 @@ public class SetBudgets extends AppCompatActivity implements BudgetAdapter.OnBud
         }
 
         final String finalCategoryId = categoryId;
-        
+
         int warningThreshold = 90; // Default
         if (!warningThresholdStr.isEmpty()) {
             try {
@@ -420,6 +420,7 @@ public class SetBudgets extends AppCompatActivity implements BudgetAdapter.OnBud
                     String computedEndDate = dateFormat.format(futureCal.getTime());
 
                     terminateOverlappingBudgets(finalCategoryId, currentViewCal);
+                    editingBudget = null; // Thêm cờ để tạo mới ngân sách
                     proceedSaveBudget(amount, finalCategoryId, description, computedStartDate, "2099-12-31", finalWarningThreshold);
                 })
                 .show();
