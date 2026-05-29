@@ -138,6 +138,7 @@ public class CategoryDetailAdapter extends RecyclerView.Adapter<CategoryDetailAd
 
         // Yearly
         public DetailItem(String dateStr, double amount) {
+            this.monthOrDayStr = dateStr;
             this.dateStr = dateStr;
             this.amount = amount;
         }
