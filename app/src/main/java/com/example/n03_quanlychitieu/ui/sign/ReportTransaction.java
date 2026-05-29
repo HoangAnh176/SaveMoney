@@ -141,21 +141,21 @@ public class ReportTransaction extends AppCompatActivity {
             tvDateRange.setText("Năm " + yearStr);
             cal.set(Calendar.MONTH, Calendar.JANUARY);
             cal.set(Calendar.DAY_OF_MONTH, 1);
-            cal.set(Calendar.HOUR_OF_DAY, 0); cal.set(Calendar.MINUTE, 0); cal.set(Calendar.SECOND, 0);
+            cal.set(Calendar.HOUR_OF_DAY, 0); cal.set(Calendar.MINUTE, 0); cal.set(Calendar.SECOND, 0); cal.set(Calendar.MILLISECOND, 0);
             currentStartDate = cal.getTime();
             cal.set(Calendar.MONTH, Calendar.DECEMBER);
             cal.set(Calendar.DAY_OF_MONTH, 31);
-            cal.set(Calendar.HOUR_OF_DAY, 23); cal.set(Calendar.MINUTE, 59); cal.set(Calendar.SECOND, 59);
+            cal.set(Calendar.HOUR_OF_DAY, 23); cal.set(Calendar.MINUTE, 59); cal.set(Calendar.SECOND, 59); cal.set(Calendar.MILLISECOND, 999);
             currentEndDate = cal.getTime();
         } else {
             cal.set(Calendar.DAY_OF_MONTH, 1);
-            cal.set(Calendar.HOUR_OF_DAY, 0); cal.set(Calendar.MINUTE, 0); cal.set(Calendar.SECOND, 0);
+            cal.set(Calendar.HOUR_OF_DAY, 0); cal.set(Calendar.MINUTE, 0); cal.set(Calendar.SECOND, 0); cal.set(Calendar.MILLISECOND, 0);
             currentStartDate = cal.getTime();
             int maxDay = cal.getActualMaximum(Calendar.DAY_OF_MONTH);
             String title = new SimpleDateFormat("MM/yyyy", Locale.getDefault()).format(cal.getTime());
             tvDateRange.setText(title + " (01/" + new SimpleDateFormat("MM", Locale.getDefault()).format(cal.getTime()) + " - " + maxDay + "/" + new SimpleDateFormat("MM", Locale.getDefault()).format(cal.getTime()) + ")");
             cal.set(Calendar.DAY_OF_MONTH, maxDay);
-            cal.set(Calendar.HOUR_OF_DAY, 23); cal.set(Calendar.MINUTE, 59); cal.set(Calendar.SECOND, 59);
+            cal.set(Calendar.HOUR_OF_DAY, 23); cal.set(Calendar.MINUTE, 59); cal.set(Calendar.SECOND, 59); cal.set(Calendar.MILLISECOND, 999);
             currentEndDate = cal.getTime();
         }
         refreshData();
@@ -193,24 +193,26 @@ public class ReportTransaction extends AppCompatActivity {
     }
     private Map<String, CategorySum> getAggregated(SQLiteDatabase db, String userId, String table) {
         Map<String, CategorySum> map = new HashMap<>();
+        String startDateStr = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault()).format(currentStartDate);
+        String endDateStr = new SimpleDateFormat("yyyy-MM-dd'T'23:59:59", Locale.getDefault()).format(currentEndDate);
+
         String query = "SELECT c.category_id, c.name, e.amount, e.create_at, c.color, c.icon FROM " + table + " e " +
-                       "JOIN categories c ON e.category_id = c.category_id " +
-                       "WHERE e.user_id = ?";
-        Cursor c = db.rawQuery(query, new String[]{userId});
+                       "LEFT JOIN categories c ON e.category_id = c.category_id " +
+                       "WHERE e.user_id = ? AND e.create_at >= ? AND e.create_at <= ?";
+        Cursor c = db.rawQuery(query, new String[]{userId, startDateStr, endDateStr});
         while (c.moveToNext()) {
             String catId = c.getString(0);
-            String name = c.getString(1);
+            String name = c.getString(1); // can be null if category was deleted
+            if (name == null) name = "Khác";
             double amount = c.getDouble(2);
             String dateStr = c.getString(3);
             String color = c.getString(4);
             String icon = c.getString(5);
             if (color == null || color.isEmpty()) color = (table.equals("expenses") ? "#E67E22" : "#3498DB");
 
-            if (isDateInRange(dateStr)) {
-                CategorySum cs = map.getOrDefault(name, new CategorySum(catId, name, 0, color, icon));
-                cs.amount += amount;
-                map.put(name, cs);
-            }
+            CategorySum cs = map.getOrDefault(name, new CategorySum(catId, name, 0, color, icon));
+            cs.amount += amount;
+            map.put(name, cs);
         }
         c.close();
         return map;
