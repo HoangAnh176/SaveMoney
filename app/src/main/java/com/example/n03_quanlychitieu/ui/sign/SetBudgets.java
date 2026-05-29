@@ -297,17 +297,6 @@ public class SetBudgets extends AppCompatActivity implements BudgetAdapter.OnBud
                     false, null, "warn", currentUserId
             );
             notificationDAO.insert(notification);
-            long result = budgetDAO.delete(budget.getBudget_id());
-            if (result != -1) {
-                Notifications deleteNoti = new Notifications(
-                        UUID.randomUUID().toString(),
-                        "Đã tự động xóa ngân sách " + budgetDesc + " do vượt quá hạn mức",
-                        false, null, "info", currentUserId
-                );
-                notificationDAO.insert(deleteNoti);
-                // Cannot call loadBudgets here if we are inside a loop in loadBudgets. 
-                // But it's relatively safe since we just reload data after delete.
-            }
         } else if (spent >= budgetAmount * warningRatio) {
             // Sắp hết ngân sách
             Notifications notification = new Notifications(
